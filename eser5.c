@@ -210,9 +210,14 @@ int main(int argc, char **argv)
 
         if (menum == 0)
         {
-            for (i = 0; i < nloc; i++)
+            int count = 0;
+            for (j = 0; j < col; j++)
             {
-                elements_loc[i] = elements[i];
+                for (i = 0; i < nloc / col; i++)
+                {
+                    elements_loc[count] = elements[i * N + j];
+                    count++;
+                }
             }
 
             for (i = 0; i < col; i++)
@@ -220,12 +225,18 @@ int main(int argc, char **argv)
                 x_loc[i] = x[i];
             }
 
+            // Da capire distribuzione
             int tmp = nloc;
             int start = 0;
             int start_vect = 0;
+            int start_col;
             int tmp_vect = col;
             for (i = 1; i < nproc; i++)
             {
+
+                tag = 22 + i;
+                start_col = i * nloc;
+
                 start += tmp;
                 start_vect += tmp_vect;
                 tag = 22 + i;
@@ -236,6 +247,8 @@ int main(int argc, char **argv)
                 }
 
                 /*da risolvere la distribuzione che non avviene per colonne ma per righe
+                    risultato
+
                     matrice  processore 0
                     1  2  3  4  5  6  7  8  9  10
 
@@ -247,8 +260,22 @@ int main(int argc, char **argv)
 
                     matrice  processore 3
                     21  22  23  24  25
+
+
+                    come dovrebbe essere:
+                    matrice  processore 0
+                    1  6  11  16  21  2  7  12  17  22
+
+                    matrice  processore 1
+                    3  8  13  18  23
+
+                    matrice  processore 2
+                    4  9  14  19  24
+
+                    matrice  processore 3
+                    5  10  15  20  25
                 */
-                MPI_Send(&elements[start], tmp, MPI_INT, i, tag, comm_grid);
+                MPI_Send(&elements[start], tmp * N, MPI_INT, i, tag, comm_grid);
                 MPI_Send(&x[start_vect], tmp_vect, MPI_INT, i, tag + 5, comm_grid);
             }
         }
